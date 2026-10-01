@@ -4,8 +4,8 @@
     <div class="thumb">
       <img :src="activity.image" :alt="activity.name" />
       <!-- 状态徽章：报名中=红，已结束=灰 -->
-      <span class="badge" :class="activity.status">
-        {{ activity.status === 'upcoming' ? '报名中' : '已结束' }}
+      <span class="badge" :class="statusClass(activity.status)">
+        {{ statusText(activity.status) }}
       </span>
     </div>
 
@@ -31,6 +31,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { dayOf, yearMonth, hhmm } from '../utils/date'
+import { statusClass, statusText } from '../utils/status'
 
 // 父组件传入单个活动对象
 const props = defineProps({

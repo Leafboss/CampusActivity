@@ -29,8 +29,8 @@
           <td>{{ full(item.time) }}</td>
           <td>{{ item.location }}</td>
           <td>
-            <span class="tag" :class="item.status">
-              {{ item.status === 'upcoming' ? '报名中' : '已结束' }}
+            <span class="tag" :class="statusClass(item.status)">
+              {{ statusText(item.status) }}
             </span>
           </td>
           <td class="ops">
@@ -50,7 +50,8 @@
           <input v-model.trim="form.name" required placeholder="如：迎新晚会" />
         </label>
         <label>活动时间
-          <input v-model="form.time" required placeholder="格式：2026-10-15 19:00" />
+          <!-- 用浏览器原生的「日期 + 时间」选择器：格式由控件保证，不用手打字符串，也就填不错 -->
+          <input v-model="form.time" type="datetime-local" required />
         </label>
         <label>活动地点
           <input v-model.trim="form.location" required placeholder="如：学校大礼堂" />
@@ -61,23 +62,30 @@
         <label>活动详情
           <textarea v-model.trim="form.detail" rows="4" required placeholder="详细介绍"></textarea>
         </label>
-        <label>活动图片
-          <!-- 图片上传：选择后立即传到后端，返回路径存进 form.image -->
+        <div class="field">活动图片
+          <!-- 图片上传：选择后立即传到后端，返回路径存进 form.image。
+               原生 file 输入框被隐藏（它的「未选择任何文件」文案无法定制，会和图片状态自相矛盾），
+               这里只把它当成触发器，用户看到的是下面自定义文案的按钮 -->
+          <input ref="fileInput" class="file-input" type="file" accept="image/*" @change="onPickImage" />
           <div class="upload-row">
-            <input type="file" accept="image/*" @change="onPickImage" />
-            <span v-if="uploading" class="uploading">上传中…</span>
+            <button type="button" class="btn-upload" :disabled="uploading" @click="fileInput.click()">
+              {{ uploading ? '上传中…' : (form.image ? '更换图片' : '选择图片') }}
+            </button>
+            <!-- 只有本次真的选了文件才显示文件名；编辑旧活动时数据库里只有路径，不重复展示 -->
+            <span v-if="pickedName" class="img-name">{{ pickedName }}</span>
           </div>
-          <!-- 已上传的图片预览 + 可移除 -->
+          <!-- 有图：预览 + 移除；没图：占位图说明 -->
           <div v-if="form.image" class="img-preview">
             <img :src="form.image" alt="活动图片预览" />
-            <button type="button" class="img-remove" @click="form.image = ''">移除</button>
+            <button type="button" class="img-remove" @click="clearImage">移除</button>
           </div>
-          <span v-else class="img-hint">不上传则使用默认占位图</span>
-        </label>
+          <span v-else class="img-hint">未选择图片，保存后自动使用默认占位图</span>
+        </div>
         <label>状态
+          <!-- :value 绑定数字（不是字符串），对应接口约定的 1=报名中 / 0=已结束 -->
           <select v-model="form.status">
-            <option value="upcoming">报名中</option>
-            <option value="ended">已结束</option>
+            <option :value="1">报名中</option>
+            <option :value="0">已结束</option>
           </select>
         </label>
 
@@ -94,6 +102,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { addActivity, deleteActivity, getActivityList, updateActivity, uploadImage } from '../api/activity'
 import { full } from '../utils/date'
+import { statusClass, statusText } from '../utils/status'
 
 // 表格数据：来自后端，增删改成功后重新拉取
 const list = ref([])
@@ -113,16 +122,21 @@ onMounted(async () => {
 
 // 表单状态：editing 控制弹层显隐，form 为当前编辑的数据副本
 const editing = ref(false)
-const emptyForm = { id: null, name: '', time: '', location: '', summary: '', detail: '', image: '', status: 'upcoming' }
+const emptyForm = { id: null, name: '', time: '', location: '', summary: '', detail: '', image: '', status: 1 }
 const form = reactive({ ...emptyForm })
 
 function openCreate() {
   Object.assign(form, emptyForm)
+  pickedName.value = ''
   editing.value = true
 }
 
 function openEdit(item) {
   Object.assign(form, item) // 拷贝一份，避免表单输入直接改到表格
+  // 接口给的是 "2026-10-15 19:00"，而 datetime-local 输入框要的是 "2026-10-15T19:00"（中间是 T）
+  form.time = item.time ? item.time.replace(' ', 'T') : ''
+  // 数据库只存图片路径，拿不到用户的原始文件名，所以这里不预填名字，交给下方预览图表示「已有图片」
+  pickedName.value = ''
   editing.value = true
 }
 
@@ -130,8 +144,12 @@ function cancel() {
   editing.value = false
 }
 
-// 图片选择：校验大小后立刻上传，成功把返回路径写进 form.image
+// 隐藏的原生 file 输入框：模板里靠它的 click() 打开系统选图框
+const fileInput = ref(null)
+// 图片是否正在上传：true 时按钮禁用并显示「上传中…」
 const uploading = ref(false)
+// 本次选择的原始文件名（只用于回显，不参与提交；编辑旧活动时为空）
+const pickedName = ref('')
 
 async function onPickImage(e) {
   const file = e.target.files[0]
@@ -145,6 +163,7 @@ async function onPickImage(e) {
   uploading.value = true
   try {
     form.image = await uploadImage(file)
+    pickedName.value = file.name // 回显用户选择的原始文件名
     tip.value = ''
   } catch (err) {
     tip.value = '图片上传失败，请稍后再试。'
@@ -155,14 +174,22 @@ async function onPickImage(e) {
   }
 }
 
+// 移除图片：同时清空路径和文件名
+function clearImage() {
+  form.image = ''
+  pickedName.value = ''
+}
+
 async function save() {
   try {
+    // 提交前把输入框的 "2026-10-15T19:00" 还原成接口约定的 "2026-10-15 19:00"
+    const payload = { ...form, time: form.time ? form.time.replace('T', ' ') : '' }
     if (form.id) {
       // 编辑：PUT /api/activities/{id}
-      await updateActivity({ ...form })
+      await updateActivity(payload)
     } else {
-      // 新增：POST /api/activities（不传图片，后端会用默认占位图）
-      await addActivity({ ...form })
+      // 新增：POST /api/activities
+      await addActivity(payload)
     }
     tip.value = '保存成功'
     editing.value = false
@@ -279,7 +306,8 @@ async function remove(item) {
   letter-spacing: 2px;
   margin-bottom: 4px;
 }
-.form label {
+.form label,
+.form .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -310,22 +338,44 @@ async function remove(item) {
 }
 
 /* 图片上传区域 */
+/* 原生 file 输入框：只为编程式点击而存在，不显示（它自带的「未选择任何文件」文案无法定制） */
+.file-input {
+  display: none;
+}
 .upload-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.upload-row input[type='file'] {
+/* 自定义上传按钮：文案随状态变化，替代原生那行「未选择任何文件」 */
+.btn-upload {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  padding: 8px 18px;
   font-size: 13px;
-  color: var(--gray-text);
+  font-family: inherit;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.uploading {
-  font-size: 13px;
+.btn-upload:hover:not(:disabled) {
+  border-color: var(--red);
   color: var(--red-text);
+}
+.btn-upload:disabled {
+  color: var(--gray-text);
+  cursor: not-allowed;
+}
+/* 本次选择的文件名回显 */
+.img-name {
+  font-size: 13px;
+  color: var(--ink);
+  letter-spacing: 0;
+  word-break: break-all;
 }
 .img-preview {
   position: relative;
-  margin-top: 8px;
   width: 200px;
 }
 .img-preview img {
@@ -345,8 +395,6 @@ async function remove(item) {
   cursor: pointer;
 }
 .img-hint {
-  display: block;
-  margin-top: 6px;
   font-size: 12px;
   color: var(--gray-text);
   letter-spacing: 0;

@@ -34,4 +34,8 @@ public interface ActivityMapper {
     /** 按 id 删除 */
     @Delete("DELETE FROM activity WHERE id = #{id}")
     void deleteById(Long id);
+
+    /** 统计还有几条活动在用这张图（删除图片文件前确认没别的记录引用它） */
+    @Select("SELECT COUNT(*) FROM activity WHERE image = #{image}")
+    int countByImage(String image);
 }

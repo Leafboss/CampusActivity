@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * 启动类：项目入口，运行 main 方法即可启动整个后端服务（默认端口 8080）
+ * 启动类：项目入口，运行 main 方法即可启动整个后端服务（端口 4987，见 application.yml）
  */
 @SpringBootApplication
 public class CampusActivityApplication {

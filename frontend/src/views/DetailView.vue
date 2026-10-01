@@ -7,8 +7,8 @@
     <!-- 头部大图 -->
     <div class="hero-img">
       <img :src="activity.image" :alt="activity.name" />
-      <span class="badge" :class="activity.status">
-        {{ activity.status === 'upcoming' ? '报名中' : '已结束' }}
+      <span class="badge" :class="statusClass(activity.status)">
+        {{ statusText(activity.status) }}
       </span>
     </div>
 
@@ -48,6 +48,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getActivityDetail } from '../api/activity'
 import { full } from '../utils/date'
+import { statusClass, statusText } from '../utils/status'
 
 // 从路由参数取 id，请求后端获取活动详情；查不到或接口异常时显示兜底页
 const route = useRoute()

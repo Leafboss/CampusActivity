@@ -3,6 +3,7 @@ package com.example.campus_activity.controller;
 import com.example.campus_activity.pojo.Activity;
 import com.example.campus_activity.pojo.Result;
 import com.example.campus_activity.service.ActivityService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,8 @@ import java.util.List;
 /**
  * 活动接口：只做「收参数 -> 调 service -> 包装 Result」，不写业务逻辑。
  * 全部接口以 /api 开头，与前端页面路径区分开。
+ * @Valid 会触发 Activity 字段上的校验注解：不通过时抛 MethodArgumentNotValidException，
+ * 由 GlobalExceptionHander 统一转成「具体哪个字段不合规」的提示，而不是笼统的「出错了」。
  */
 @RestController
 @RequestMapping("/api/activities")
@@ -38,14 +41,14 @@ public class ActivityController {
 
     /** 新增活动：POST /api/activities，请求体为活动 JSON */
     @PostMapping
-    public Result add(@RequestBody Activity activity) {
+    public Result add(@Valid @RequestBody Activity activity) {
         activityService.add(activity);
         return Result.success();
     }
 
     /** 修改活动：PUT /api/activities/{id}，请求体为活动 JSON */
     @PutMapping("/{id}")
-    public Result update(@PathVariable Long id, @RequestBody Activity activity) {
+    public Result update(@PathVariable Long id, @Valid @RequestBody Activity activity) {
         // id 以路径为准，防止请求体里带错
         activity.setId(id);
         activityService.update(activity);

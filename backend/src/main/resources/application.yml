@@ -31,6 +31,8 @@ logging:
   level:
     com.example.campus_activity: info
 
-# 文件上传目录：写绝对路径，否则 IDEA（工作目录是 backend/）和命令行启动会存到不同地方
+# 文件上传目录：默认放在用户主目录下 —— 任何机器都存在，且不受「从哪个工作目录启动」影响
+# （IDEA 从 backend/ 启动、命令行从项目根启动，解析出来的绝对路径都一样）
+# 想换位置就设环境变量 UPLOAD_PATH，例如 UPLOAD_PATH=D:/xxx/uploads/
 upload:
-  path: ${UPLOAD_PATH:D:/潘/大学/技术部文件夹/一轮面试/uploads/}
+  path: ${UPLOAD_PATH:${user.home}/campus-activity-uploads/}
