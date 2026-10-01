@@ -61,6 +61,19 @@
         <label>活动详情
           <textarea v-model.trim="form.detail" rows="4" required placeholder="详细介绍"></textarea>
         </label>
+        <label>活动图片
+          <!-- 图片上传：选择后立即传到后端，返回路径存进 form.image -->
+          <div class="upload-row">
+            <input type="file" accept="image/*" @change="onPickImage" />
+            <span v-if="uploading" class="uploading">上传中…</span>
+          </div>
+          <!-- 已上传的图片预览 + 可移除 -->
+          <div v-if="form.image" class="img-preview">
+            <img :src="form.image" alt="活动图片预览" />
+            <button type="button" class="img-remove" @click="form.image = ''">移除</button>
+          </div>
+          <span v-else class="img-hint">不上传则使用默认占位图</span>
+        </label>
         <label>状态
           <select v-model="form.status">
             <option value="upcoming">报名中</option>
@@ -79,7 +92,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { addActivity, deleteActivity, getActivityList, updateActivity } from '../api/activity'
+import { addActivity, deleteActivity, getActivityList, updateActivity, uploadImage } from '../api/activity'
 import { full } from '../utils/date'
 
 // 表格数据：来自后端，增删改成功后重新拉取
@@ -100,7 +113,7 @@ onMounted(async () => {
 
 // 表单状态：editing 控制弹层显隐，form 为当前编辑的数据副本
 const editing = ref(false)
-const emptyForm = { id: null, name: '', time: '', location: '', summary: '', detail: '', status: 'upcoming' }
+const emptyForm = { id: null, name: '', time: '', location: '', summary: '', detail: '', image: '', status: 'upcoming' }
 const form = reactive({ ...emptyForm })
 
 function openCreate() {
@@ -115,6 +128,31 @@ function openEdit(item) {
 
 function cancel() {
   editing.value = false
+}
+
+// 图片选择：校验大小后立刻上传，成功把返回路径写进 form.image
+const uploading = ref(false)
+
+async function onPickImage(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  // 超过 10MB 直接拦下（后端也有同样限制，前端先拦省一次请求）
+  if (file.size > 10 * 1024 * 1024) {
+    tip.value = '图片不能超过 10MB'
+    e.target.value = ''
+    return
+  }
+  uploading.value = true
+  try {
+    form.image = await uploadImage(file)
+    tip.value = ''
+  } catch (err) {
+    tip.value = '图片上传失败，请稍后再试。'
+  } finally {
+    uploading.value = false
+    // 清空 input，否则连续选同一张图不会触发 change
+    e.target.value = ''
+  }
 }
 
 async function save() {
@@ -269,5 +307,48 @@ async function remove(item) {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+/* 图片上传区域 */
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.upload-row input[type='file'] {
+  font-size: 13px;
+  color: var(--gray-text);
+}
+.uploading {
+  font-size: 13px;
+  color: var(--red-text);
+}
+.img-preview {
+  position: relative;
+  margin-top: 8px;
+  width: 200px;
+}
+.img-preview img {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--line);
+}
+.img-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.img-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--gray-text);
+  letter-spacing: 0;
 }
 </style>

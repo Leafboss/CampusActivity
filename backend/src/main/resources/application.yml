@@ -12,6 +12,11 @@ spring:
     url: ${DB_URL:jdbc:mysql://localhost:3306/campus_activity?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
+  # 文件上传限制：单个文件 / 单次请求最大 10MB，防止超大文件拖垮服务
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 # MyBatis 配置
 mybatis:
@@ -25,3 +30,7 @@ mybatis:
 logging:
   level:
     com.example.campus_activity: info
+
+# 文件上传目录：写绝对路径，否则 IDEA（工作目录是 backend/）和命令行启动会存到不同地方
+upload:
+  path: ${UPLOAD_PATH:D:/潘/大学/技术部文件夹/一轮面试/uploads/}

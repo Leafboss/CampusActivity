@@ -37,3 +37,11 @@ export function updateActivity(data) {
 export function deleteActivity(id) {
   return axios.delete(`/api/activities/${id}`).then(unwrap)
 }
+
+/** 上传图片：表单字段名 file，返回可访问路径（如 /uploads/xxx.jpg） */
+export function uploadImage(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  // axios 会自动设置 multipart/form-data 的 Content-Type（带 boundary），不用手动写
+  return axios.post('/api/upload', formData).then(unwrap)
+}

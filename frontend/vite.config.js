@@ -11,6 +11,11 @@ export default defineConfig({
         target: 'http://localhost:4987',
         changeOrigin: true,
       },
+      // 用户上传的图片也在后端，同样转发（否则前端访问 /uploads/xxx.jpg 会 404）
+      '/uploads': {
+        target: 'http://localhost:4987',
+        changeOrigin: true,
+      },
     },
   },
 })
