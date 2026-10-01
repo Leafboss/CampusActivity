@@ -1,0 +1,102 @@
+/* ============================================================
+   全局样式：配色取自学校官网（珠科红），版式参考 brigadeoverland
+   （大写标题、直角卡片、图片驱动的分带布局）
+   ============================================================ */
+:root {
+  /* 珠科红：取自学校官网实测色值 */
+  --red: #ef3751;          /* 主品牌红：整块底色 / 按钮渐变起点 */
+  --red-dark: #d31c38;     /* 按钮渐变终点 / hover 态 */
+  --red-text: #b7354b;     /* 正文与标题链接红（小面积文字强调） */
+  --red-deep: #cd3c59;     /* 数据带底色 */
+  --nav-grad: linear-gradient(90deg, #d6213d, #e4566b); /* 顶部导航渐变 */
+  --ink: #1a1a1a;          /* 近黑：正文与深色区块 */
+  --paper: #ffffff;
+  --gray-bg: #f5f5f3;      /* 浅灰：交替区块底色 */
+  --gray-text: #6b6b6b;    /* 次要文字 */
+  --line: #e4e4e0;         /* 分隔线 */
+
+  /* 中文用系统黑体栈；英文标题用窄体无衬线营造海报感 */
+  --font-cn: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-en: "Arial Narrow", "Oswald", "Impact", sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-cn);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 内容最大宽容器 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* 双语区块标题：中文 • ENGLISH（借自学校官网栏目习惯） */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+.section-title h2 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.section-title .en {
+  font-family: var(--font-en);
+  font-size: 15px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+/* 通用按钮：直角、红渐变底白字，hover 整体变深 */
+.btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  font-size: 15px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: var(--red-dark);
+}
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+.btn.ghost:hover {
+  background: var(--ink);
+  color: #fff;
+}

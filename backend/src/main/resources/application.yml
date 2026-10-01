@@ -1,0 +1,27 @@
+# 服务端口
+server:
+  port: 4987
+
+spring:
+  application:
+    name: campus-activity
+  # 数据源：真实密码放环境变量 DB_PASSWORD（配置文件只留占位符，绝不入库）
+  # ${VAR:默认值} 语法：启动时先找环境变量，找不到才用冒号后的默认值
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/campus_activity?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+
+# MyBatis 配置
+mybatis:
+  configuration:
+    # 下划线转驼峰：表字段 create_time -> 实体属性 createTime，省去手写映射
+    map-underscore-to-camel-case: true
+    # 控制台打印执行的 SQL 和参数，方便调试
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 日志：INFO 级别，能看到启动信息和 MyBatis 的 SQL 输出
+logging:
+  level:
+    com.example.campus_activity: info
