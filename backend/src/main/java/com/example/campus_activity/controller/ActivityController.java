@@ -22,10 +22,15 @@ public class ActivityController {
     @Autowired
     private ActivityService activityService;
 
-    /** 活动列表：GET /api/activities */
+    /**
+     * 活动列表：GET /api/activities?keyword=篮球&status=1
+     * 两个参数都是可选的（required = false）：不传就是全量列表，首页和管理页都走这个接口。
+     * status 用 Integer 而不是 int，因为「不传」和「传 0（已结束）」必须区分开。
+     */
     @GetMapping
-    public Result list() {
-        List<Activity> list = activityService.list();
+    public Result list(@RequestParam(required = false) String keyword,
+                       @RequestParam(required = false) Integer status) {
+        List<Activity> list = activityService.list(keyword, status);
         return Result.success(list);
     }
 

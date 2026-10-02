@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  活动表的 XML 映射。
+  为什么只为这一个方法引入 XML：它是本项目唯一一段「动态 SQL」——要不要把某个条件拼进 WHERE
+  由参数决定。注解里写就得自己拼字符串，还容易漏掉「一个条件都没有时不能留 WHERE」和
+  「第一个条件前面不能有 AND」这两件事；XML 的 <where> 会把这两件事自动做对。
+  文件位置是 MyBatis 的约定：与 Mapper 接口「同包同名」
+  （classpath:com/example/campus_activity/mapper/ActivityMapper.xml），因此不需要额外配置 mapper-locations。
+-->
+<mapper namespace="com.example.campus_activity.mapper.ActivityMapper">
+
+    <!--
+      按条件查询活动列表。
+      keyword：模糊匹配 名称 / 地点 / 简介（CONCAT 拼 % 由数据库执行，#{} 是预编译占位符，不会有注入风险）
+      status ：精确匹配 1=报名中 / 0=已结束
+      两个 <if> 都不成立时，<where> 不会生成 WHERE 关键字，等价于原来的全量查询。
+    -->
+    <select id="findByCondition" resultType="com.example.campus_activity.pojo.Activity">
+        SELECT * FROM activity
+        <where>
+            <if test="keyword != null">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                OR location LIKE CONCAT('%', #{keyword}, '%')
+                OR summary LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY time DESC
+    </select>
+
+</mapper>

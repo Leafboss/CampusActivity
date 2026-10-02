@@ -20,8 +20,13 @@ import java.util.List;
 @Service
 public class ActivityServiceImpl implements ActivityService {
 
-    /** 没传图片时用的默认占位图（前端打包的静态资源，不在后端磁盘上） */
-    private static final String DEFAULT_IMAGE = "/images/activity-1.jpg";
+    /**
+     * 没传图片时用的默认占位图（前端打包的静态资源，不在后端磁盘上）。
+     * 用中性的「待补充活动图片」，而不是 activity-1.jpg ——
+     * 后者是种子数据里「迎新晚会」那个活动的配图，拿来当默认值会让新建的活动
+     * 顶着别人的标题，语义上就不对。
+     */
+    private static final String DEFAULT_IMAGE = "/images/placeholder.jpg";
 
     /** 用户上传图片的访问前缀：数据库里存 /uploads/xxx.png，物理文件在 upload.path 目录下 */
     private static final String UPLOAD_URL_PREFIX = "/uploads/";
@@ -34,8 +39,21 @@ public class ActivityServiceImpl implements ActivityService {
     private ActivityMapper activityMapper;
 
     @Override
-    public List<Activity> list() {
-        return activityMapper.findAll();
+    public List<Activity> list(String keyword, Integer status) {
+        return activityMapper.findByCondition(normalizeKeyword(keyword), status);
+    }
+
+    /**
+     * 把「空串 / 只有空格」的关键词统一成 null。
+     * 这样 XML 的动态 SQL 里就只需判断一种情况（!= null）——前端清空搜索框时传的往往是空串，
+     * 如果在 SQL 层再判断一次 keyword != ''，条件就会两边都要维护。
+     */
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String trimmed = keyword.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     @Override

@@ -12,9 +12,12 @@ import java.util.List;
 @Mapper
 public interface ActivityMapper {
 
-    /** 查询全部活动，按时间倒序（最近的活动排前面） */
-    @Select("SELECT * FROM activity ORDER BY time DESC")
-    List<Activity> findAll();
+    /**
+     * 按条件查询活动列表，按时间倒序（最近的活动排前面）。
+     * keyword 为 null 不按关键词筛，status 为 null 不按状态筛；两个都不传就等于查全部。
+     * SQL 写在同包同名的 ActivityMapper.xml 里 —— 动态 SQL 用 XML 的 <if> 比注解里拼字符串清楚得多。
+     */
+    List<Activity> findByCondition(@Param("keyword") String keyword, @Param("status") Integer status);
 
     /** 按 id 查询单个活动 */
     @Select("SELECT * FROM activity WHERE id = #{id}")

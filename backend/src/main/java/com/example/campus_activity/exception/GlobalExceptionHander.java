@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -40,6 +41,16 @@ public class GlobalExceptionHander {
     public Result handleNotReadable(HttpMessageNotReadableException e) {
         log.warn("请求体解析失败：{}", e.getMessage());
         return Result.error("请求参数格式不正确（时间格式示例：2026-10-15 19:00）");
+    }
+
+    /**
+     * 查询参数类型对不上：例如 GET /api/activities?status=abc（status 要的是数字）。
+     * 不加这一条就会落到下面的兜底分支，用户只能看到「出错了，请稍后再试~」。
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public Result handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        log.warn("参数类型不正确：{} = {}", e.getName(), e.getValue());
+        return Result.error("参数 " + e.getName() + " 的格式不正确");
     }
 
     @ExceptionHandler(Exception.class)

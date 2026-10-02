@@ -9,8 +9,11 @@ import java.util.List;
  */
 public interface ActivityService {
 
-    /** 查询全部活动 */
-    List<Activity> list();
+    /**
+     * 按条件查询活动列表（首页 / 管理页共用）。
+     * keyword 为 null 或空表示不按关键词筛；status 为 null 表示不按状态筛。
+     */
+    List<Activity> list(String keyword, Integer status);
 
     /** 按 id 查详情 */
     Activity getById(Long id);

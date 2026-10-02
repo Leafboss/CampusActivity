@@ -50,8 +50,21 @@
           <input v-model.trim="form.name" required placeholder="如：迎新晚会" />
         </label>
         <label>活动时间
-          <!-- 用浏览器原生的「日期 + 时间」选择器：格式由控件保证，不用手打字符串，也就填不错 -->
-          <input v-model="form.time" type="datetime-local" required />
+          <!-- 用浏览器原生的「日期 + 时间」选择器：格式由控件保证，不用手打字符串。
+               min/max 先把可选范围卡住（原生日期面板就选不出界外年份），
+               再交给 checkTime() 校验「必须 4 位年份 / 日期真实存在」（规则见 utils/datetime.js）。
+               两层都要：min/max 挡不住手打，校验函数才是真正拦人的那一道 -->
+          <input
+            v-model="form.time"
+            type="datetime-local"
+            required
+            :min="localMin"
+            :max="localMax"
+            :class="{ invalid: timeError }"
+            @input="timeError = ''"
+            @change="checkTime"
+          />
+          <span v-if="timeError" class="field-error">{{ timeError }}</span>
         </label>
         <label>活动地点
           <input v-model.trim="form.location" required placeholder="如：学校大礼堂" />
@@ -100,8 +113,9 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { addActivity, deleteActivity, getActivityList, updateActivity, uploadImage } from '../api/activity'
+import { addActivity, deleteActivity, errText, getActivityList, updateActivity, uploadImage } from '../api/activity'
 import { full } from '../utils/date'
+import { localMax, localMin, validateLocalDateTime } from '../utils/datetime'
 import { statusClass, statusText } from '../utils/status'
 
 // 表格数据：来自后端，增删改成功后重新拉取
@@ -116,7 +130,7 @@ onMounted(async () => {
   try {
     await load()
   } catch (e) {
-    tip.value = '加载失败，请确认后端服务已启动。'
+    tip.value = errText(e, '加载失败，请确认后端服务已启动。')
   }
 })
 
@@ -125,9 +139,18 @@ const editing = ref(false)
 const emptyForm = { id: null, name: '', time: '', location: '', summary: '', detail: '', image: '', status: 1 }
 const form = reactive({ ...emptyForm })
 
+// 活动时间的字段级错误文案：空串表示合法（规则见 utils/datetime.js）
+const timeError = ref('')
+
+/** 校验「活动时间」，结果直接显示在字段下方；save() 提交前还会再调一次 */
+function checkTime() {
+  timeError.value = validateLocalDateTime(form.time)
+}
+
 function openCreate() {
   Object.assign(form, emptyForm)
   pickedName.value = ''
+  timeError.value = ''
   editing.value = true
 }
 
@@ -137,6 +160,7 @@ function openEdit(item) {
   form.time = item.time ? item.time.replace(' ', 'T') : ''
   // 数据库只存图片路径，拿不到用户的原始文件名，所以这里不预填名字，交给下方预览图表示「已有图片」
   pickedName.value = ''
+  timeError.value = ''
   editing.value = true
 }
 
@@ -166,7 +190,7 @@ async function onPickImage(e) {
     pickedName.value = file.name // 回显用户选择的原始文件名
     tip.value = ''
   } catch (err) {
-    tip.value = '图片上传失败，请稍后再试。'
+    tip.value = errText(err, '图片上传失败，请稍后再试。')
   } finally {
     uploading.value = false
     // 清空 input，否则连续选同一张图不会触发 change
@@ -181,6 +205,10 @@ function clearImage() {
 }
 
 async function save() {
+  // 提交前先本地校验：年份必须 4 位、日期要真实存在。不通过就停在字段下方提示、不发请求
+  checkTime()
+  if (timeError.value) return
+
   try {
     // 提交前把输入框的 "2026-10-15T19:00" 还原成接口约定的 "2026-10-15 19:00"
     const payload = { ...form, time: form.time ? form.time.replace('T', ' ') : '' }
@@ -195,7 +223,8 @@ async function save() {
     editing.value = false
     await load()
   } catch (e) {
-    tip.value = '保存失败，请稍后再试。'
+    // 后端明确给出的原因（如「请求参数格式不正确…」）原样显示，其余（断网、5xx）才用兜底文案
+    tip.value = errText(e, '保存失败，请稍后再试。')
   }
 }
 
@@ -206,7 +235,7 @@ async function remove(item) {
     tip.value = '删除成功'
     await load()
   } catch (e) {
-    tip.value = '删除失败，请稍后再试。'
+    tip.value = errText(e, '删除失败，请稍后再试。')
   }
 }
 </script>
@@ -397,6 +426,17 @@ async function remove(item) {
 .img-hint {
   font-size: 12px;
   color: var(--gray-text);
+  letter-spacing: 0;
+}
+
+/* 校验不通过的输入框描红 + 字段下方的错误文案 */
+.form input.invalid {
+  border-color: var(--red);
+  outline: 1px solid var(--red);
+}
+.field-error {
+  color: var(--red-text);
+  font-size: 12px;
   letter-spacing: 0;
 }
 </style>

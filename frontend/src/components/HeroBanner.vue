@@ -1,6 +1,6 @@
 <template>
   <!-- Hero：全屏大图 + 居中大标题（模板站风格）。
-       背景图是占位图，替换 src/assets/hero.jpg 即可换成真实照片 -->
+       背景图 src/assets/hero.jpg 是学校实景航拍（真实照片），换图直接替换该文件即可 -->
   <section class="hero">
     <div class="hero-mask">
       <p class="hero-eyebrow">珠海科技学院</p>

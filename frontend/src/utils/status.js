@@ -14,3 +14,14 @@ export function statusText(status) {
 export function statusClass(status) {
   return status === 1 ? 'upcoming' : 'ended'
 }
+
+/**
+ * 列表页的筛选标签。
+ * value 直接就是接口的 status 取值（null 表示「不筛」），label 复用上面的文案函数，
+ * 这样以后加状态 / 改文案只动这一个文件。
+ */
+export const STATUS_TABS = [
+  { value: null, label: '全部' },
+  { value: 1, label: statusText(1) },
+  { value: 0, label: statusText(0) },
+]
