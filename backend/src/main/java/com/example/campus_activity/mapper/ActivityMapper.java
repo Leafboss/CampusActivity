@@ -24,6 +24,7 @@ public interface ActivityMapper {
     Activity findById(Long id);
 
     /** 新增活动，useGeneratedKeys 把自增 id 回填到实体里（新增后前端能立刻拿到 id 跳详情） */
+    //注解Options的作用是：useGeneratedKeys = true 表示使用数据库的自增主键，keyProperty = "id" 表示把自增的主键值回填到实体对象的id属性中
     @Insert("INSERT INTO activity(name, time, location, summary, detail, image, status) " +
             "VALUES(#{name}, #{time}, #{location}, #{summary}, #{detail}, #{image}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id")

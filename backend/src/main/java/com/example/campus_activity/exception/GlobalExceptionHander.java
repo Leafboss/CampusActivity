@@ -22,7 +22,6 @@ public class GlobalExceptionHander {
 
     /**
      * 参数校验不通过（Controller 上的 @Valid 触发）。
-     * 把「具体哪个字段不合规」返回给前端 —— 这比统一的「出错了」有用得多。
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Result handleValidation(MethodArgumentNotValidException e) {
@@ -40,7 +39,7 @@ public class GlobalExceptionHander {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Result handleNotReadable(HttpMessageNotReadableException e) {
         log.warn("请求体解析失败：{}", e.getMessage());
-        return Result.error("请求参数格式不正确（时间格式示例：2026-10-15 19:00）");
+        return Result.error("请求参数格式不正确，请检查时间格式或status是否为0或1（时间格式示例：2026-10-15 19:00）");
     }
 
     /**
